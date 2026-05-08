@@ -552,7 +552,8 @@ async function doSearch() {
   const q=document.getElementById('wq').value.trim();
   if(!q) return;
   const sr=document.getElementById('sresults');
-  sr.innerHTML=`<div class="loading"><div class="ld"></div><div class="ld"></div><div class="ld"></div></div>`;
+  sr.innerHTML='<div class="loading"><div class="ld"></div><div class="ld"></div><div class="ld"></div></div>';
+  const prompt='Sei un assistente specializzato nel settore tunnelling e grandi opere sotterranee a livello mondiale. Cerca e fornisci informazioni aggiornate su: "'+q+'". Rispondi SOLO con un oggetto JSON (nessun testo fuori), formato: {"results":[{"title":"...","source":"...","date":"YYYY-MM-DD","excerpt":"...","project":"nome progetto se identificabile","relevance":"alta|media"}]}. Fornisci 3-4 risultati pertinenti e informativi con excerpt di 2-4 frasi. Fonti tipiche: Tunnels & Tunnelling, ITA-AITES, NCE, ENR, TED EU, LinkedIn, comunicati costruttori.';
   try {
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
@@ -560,35 +561,24 @@ async function doSearch() {
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:1200,
-        messages:[{role:'user',content:`Sei un assistente specializzato nel settore tunnelling e grandi opere sotterranee a livello mondiale.
-Cerca e fornisci informazioni aggiornate su: "${q}"
-
-Rispondi SOLO con un oggetto JSON (nessun testo fuori), formato:
-{"results":[{"title":"...","source":"...","date":"YYYY-MM-DD","excerpt":"...","project":"nome progetto se identificabile","relevance":"alta|media"}]}
-
-Fornisci 3-4 risultati pertinenti e informativi. L\`excerpt deve essere sostanzioso (2-4 frasi). Fonti tipiche: Tunnels & Tunnelling, ITA-AITES, NCE, ENR, TED EU, LinkedIn, comunicati costruttori.\`}]}
+        messages:[{role:'user',content:prompt}]
+      })
     });
     const d=await res.json();
-    const txt=(d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    const txt=(d.content||[]).filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('');
     let parsed;
-    try{parsed=JSON.parse(txt.replace(/```json|```/g,'').trim());}catch(e){parsed=null;}
+    try{parsed=JSON.parse(txt.replace(/```json/g,'').replace(/```/g,'').trim());}catch(e){parsed=null;}
     if(parsed&&parsed.results&&parsed.results.length) {
-      sr.innerHTML=parsed.results.map(r=>`<div class="sr">
-        <div class="sr-title">${r.title}</div>
-        <div class="sr-meta">${r.source} · ${r.date} · <span style="color:${r.relevance==='alta'?'var(--green)':'var(--amber)'}">rilevanza ${r.relevance}</span>${r.project?` · <em>${r.project}</em>`:''}</div>
-        <div class="sr-excerpt">${r.excerpt}</div>
-        <div class="sr-actions">
-          <button class="btn btn-sm btn-primary" onclick='prefillNews(${JSON.stringify({title:r.title,source:r.source,date:r.date,excerpt:r.excerpt})})'>Salva come news →</button>
-        </div>
-      </div>`).join('');
+      sr.innerHTML=parsed.results.map(function(r){
+        return '<div class="sr"><div class="sr-title">'+r.title+'</div><div class="sr-meta">'+r.source+' · '+r.date+' · <span style="color:'+(r.relevance==='alta'?'var(--green)':'var(--amber)')+'">rilevanza '+r.relevance+'</span>'+(r.project?' · <em>'+r.project+'</em>':'')+'</div><div class="sr-excerpt">'+r.excerpt+'</div><div class="sr-actions"><button class="btn btn-sm btn-primary" onclick=\'prefillNews('+JSON.stringify(r)+')\'> Salva come news</button></div></div>';
+      }).join('');
     } else {
-      sr.innerHTML=`<div class="empty">Nessun risultato trovato. Prova a riformulare la query.</div>`;
+      sr.innerHTML='<div class="empty">Nessun risultato trovato. Prova a riformulare la query.</div>';
     }
   } catch(e) {
-    sr.innerHTML=`<div class="empty">Errore nella ricerca. Riprova.</div>`;
+    sr.innerHTML='<div class="empty">Errore nella ricerca. Riprova.</div>';
   }
 }
-
 function prefillNews(data) {
   closeModal();
   openNews(null, data);
