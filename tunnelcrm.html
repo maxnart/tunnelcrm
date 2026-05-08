@@ -111,6 +111,23 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue)}
 .tag-cantiere{background:var(--green-bg);color:var(--green)}
 .tag-milestone{background:var(--purple-bg);color:var(--purple)}
 .tag-incidente{background:var(--red-bg);color:var(--red)}
+
+@media print {
+  .sidebar, .topbar, .btn, .btn-sm, .btn-primary, .btn-danger { display: none !important; }
+  .app { display: block; height: auto; }
+  .main { overflow: visible; }
+  .content { overflow: visible; padding: 0; }
+  .card { border: 1px solid #ccc; break-inside: avoid; }
+  .table td, .table th { font-size: 11px; padding: 6px 8px; }
+  .print-header { display: block !important; }
+  .print-card { break-inside: avoid; page-break-inside: avoid; border: 1px solid #ddd; border-radius: 8px; padding: 14px; margin-bottom: 16px; }
+  .print-card-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+  .print-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .print-card-field { font-size: 11px; }
+  .print-card-label { color: #888; margin-bottom: 2px; }
+  .print-card-val { font-weight: 500; }
+}
+.print-header { display: none; }
 </style>
 </head>
 <body>
@@ -251,7 +268,7 @@ function renderDashboard(c,ta) {
 }
 
 function renderProjects(c,ta) {
-  ta.innerHTML=`<input class="search-input" placeholder="Cerca..." oninput="filterP(this.value)" id="psearch"><button class="btn btn-primary" onclick="openProject()">+ Nuovo progetto</button>`;
+  ta.innerHTML=`<input class="search-input" placeholder="Cerca..." oninput="filterP(this.value)" id="psearch"><button class="btn" onclick="printProjects()">Stampa report</button><button class="btn btn-primary" onclick="openProject()">+ Nuovo progetto</button>`;
   c.innerHTML=`<div class="card"><table class="table"><thead><tr><th>Progetto</th><th>Paese</th><th>Tipo</th><th>Km</th><th>Fase</th><th>GC aggiudicatario</th><th>Valore</th><th></th></tr></thead><tbody id="ptbody">${pRows(projects)}</tbody></table></div>`;
 }
 function pRows(list) {
@@ -273,8 +290,8 @@ function filterP(q) {
 }
 
 function renderGare(c,ta) {
-  ta.innerHTML=`<button class="btn btn-primary" onclick="openGara()">+ Nuova gara</button>`;
-  c.innerHTML=`<div class="card"><table class="table"><thead><tr><th>Progetto</th><th>Riferimento bando</th><th>Base d'asta</th><th>Scadenza</th><th>Aggiudicatario</th><th>Ribasso</th><th>Data aggiud.</th><th>Fonte</th></tr></thead><tbody>
+  ta.innerHTML=`<button class="btn" onclick="printGare()">Stampa report</button><button class="btn btn-primary" onclick="openGara()">+ Nuova gara</button>`;
+  c.innerHTML=`<div class="card"><table class="table"><thead><tr><th>Progetto</th><th>Riferimento bando</th><th>Base d'asta</th><th>Scadenza</th><th>Aggiudicatario</th><th>Ribasso</th><th>Data aggiud.</th><th>Fonte</th><th></th></tr></thead><tbody>
     ${gare.length?gare.map(g=>`<tr>
       <td><button class="link-btn" onclick="go('projects',${g.project_id})">${pname(g.project_id)}</button></td>
       <td style="font-size:11px;color:var(--text2)">${g.ref||''}</td>
@@ -284,7 +301,8 @@ function renderGare(c,ta) {
       <td>${g.discount||'—'}</td>
       <td>${g.award_date||'—'}</td>
       <td style="font-size:11px;color:var(--text2)">${g.source||''}</td>
-    </tr>`).join(''):`<tr><td colspan="8" class="empty">Nessuna gara registrata.</td></tr>`}
+      <td><button class="btn btn-sm" onclick="openEditGara(${g.id})">Modifica</button></td>
+    </tr>`).join(''):`<tr><td colspan="9" class="empty">Nessuna gara registrata.</td></tr>`}
   </tbody></table></div>`;
 }
 
@@ -488,6 +506,39 @@ function openGara(pid=null) {
   <div class="fg"><label class="fl">Link</label><input id="g-link" placeholder="https://..."></div>
   <div class="factions"><button class="btn" onclick="closeModal()">Annulla</button><button class="btn btn-primary" onclick="saveGara()">Salva</button></div>`);
 }
+async function openEditGara(id) {
+  const g=gare.find(x=>x.id==id);
+  if(!g) return;
+  modal(`<div class="modal-title">Modifica gara / contratto</div>
+  <div class="fg"><label class="fl">Progetto collegato (opzionale)</label><select id="g-pid"><option value="">— Nessun progetto —</option>${projectOptions(g.project_id)}</select></div>
+  <div class="fg"><label class="fl">Riferimento bando</label><input id="g-ref" value="${g.ref||''}"></div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Data pubblicazione</label><input id="g-pub" type="date" value="${g.published||''}"></div>
+    <div class="fg"><label class="fl">Scadenza offerte</label><input id="g-dead" type="date" value="${g.deadline||''}"></div>
+  </div>
+  <div class="fg"><label class="fl">Importo base d'asta</label><input id="g-base" value="${g.base||''}"></div>
+  <div class="fg"><label class="fl">Lotto</label><input id="g-lot" value="${g.lot||''}"></div>
+  <div class="fg"><label class="fl">Aggiudicatario</label><input id="g-winner" value="${g.winner&&g.winner!=='—'?g.winner:''}"></div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Data aggiudicazione</label><input id="g-adate" type="date" value="${g.award_date||''}"></div>
+    <div class="fg"><label class="fl">Ribasso %</label><input id="g-discount" type="number" step="0.01" value="${g.discount&&g.discount!=='—'?g.discount:''}"></div>
+  </div>
+  <div class="fg"><label class="fl">Fonte</label><input id="g-source" value="${g.source||''}"></div>
+  <div class="fg"><label class="fl">Link</label><input id="g-link" value="${g.link&&g.link!=='#'?g.link:''}"></div>
+  <div class="factions"><button class="btn" onclick="closeModal()">Annulla</button><button class="btn btn-primary" onclick="updateGara(${id})">Aggiorna</button></div>`);
+}
+
+async function updateGara(id) {
+  const pid=v('g-pid')?parseInt(v('g-pid')):null;
+  const winner=v('g-winner')||'—';
+  const obj={project_id:pid,ref:v('g-ref'),published:v('g-pub')||null,deadline:v('g-dead')||null,base:v('g-base'),lot:v('g-lot'),winner,award_date:v('g-adate')||null,discount:v('g-discount')||'—',source:v('g-source'),link:v('g-link')||'#'};
+  await sb.from('gare').update(obj).eq('id',id);
+  if(winner&&winner!=='—'&&pid) {
+    await sb.from('projects').update({phase:'aggiudicato',gc:winner}).eq('id',pid);
+  }
+  closeModal(); render();
+}
+
 async function saveGara() {
   const pid=v('g-pid')?parseInt(v('g-pid')):null;
   const winner=v('g-winner')||'—';
@@ -585,6 +636,80 @@ function prefillNews(data) {
 
 function v(id){const el=document.getElementById(id);return el?el.value:'';}
 function today(){return new Date().toISOString().slice(0,10);}
+
+function printProjects() {
+  const win=window.open('','_blank');
+  const rows=projects.map(p=>`
+    <div class="print-card">
+      <div class="print-card-title">${p.name} <span style="font-size:11px;font-weight:400;color:#888;">${p.phase||''}</span></div>
+      <div class="print-card-grid">
+        <div class="print-card-field"><div class="print-card-label">Paese</div><div class="print-card-val">${p.country||'—'}</div></div>
+        <div class="print-card-field"><div class="print-card-label">Tipo</div><div class="print-card-val">${p.type||'—'}</div></div>
+        <div class="print-card-field"><div class="print-card-label">Committente</div><div class="print-card-val">${p.client||'—'}</div></div>
+        <div class="print-card-field"><div class="print-card-label">Progettista</div><div class="print-card-val">${p.designer||'—'}</div></div>
+        <div class="print-card-field"><div class="print-card-label">General contractor</div><div class="print-card-val">${p.gc||'—'}</div></div>
+        <div class="print-card-field"><div class="print-card-label">Valore</div><div class="print-card-val">${p.value||'—'}</div></div>
+        <div class="print-card-field"><div class="print-card-label">Lunghezza</div><div class="print-card-val">${p.km?p.km+' km':'—'}</div></div>
+        <div class="print-card-field"><div class="print-card-label">TBM</div><div class="print-card-val">${p.tbm?'Sì':'No'}</div></div>
+      </div>
+      ${p.notes?`<div style="margin-top:8px;font-size:11px;color:#555;border-top:1px solid #eee;padding-top:8px">${p.notes}</div>`:''}
+    </div>`).join('');
+  win.document.write(`<!DOCTYPE html><html><head><title>Report Progetti - TunnelCRM</title><style>
+    body{font-family:-apple-system,sans-serif;padding:24px;color:#1a1a1a;max-width:900px;margin:0 auto}
+    h1{font-size:20px;font-weight:600;margin-bottom:4px}
+    .sub{font-size:12px;color:#888;margin-bottom:20px}
+    .print-card{border:1px solid #ddd;border-radius:8px;padding:14px;margin-bottom:14px;break-inside:avoid}
+    .print-card-title{font-size:14px;font-weight:600;margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:8px}
+    .print-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .print-card-field{font-size:12px}
+    .print-card-label{color:#888;margin-bottom:2px;font-size:10px;text-transform:uppercase;letter-spacing:0.05em}
+    .print-card-val{font-weight:500}
+    @media print{button{display:none}}
+  </style></head><body>
+    <h1>Report Progetti</h1>
+    <div class="sub">TunnelCRM · ${new Date().toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'})} · ${projects.length} progetti</div>
+    <button onclick="window.print()" style="margin-bottom:16px;padding:8px 16px;font-size:13px;cursor:pointer;border:1px solid #ccc;border-radius:6px;background:#fff">Stampa / Salva PDF</button>
+    ${rows}
+  </body></html>`);
+  win.document.close();
+}
+
+function printGare() {
+  const win=window.open('','_blank');
+  const rows=gare.map(g=>`
+    <div class="print-card">
+      <div class="print-card-title">${g.ref||'Gara senza riferimento'} <span style="font-size:11px;font-weight:400;color:#888;">${g.winner&&g.winner!=='—'?'Aggiudicata':'In corso'}</span></div>
+      <div class="print-card-grid">
+        <div class="print-card-field"><div class="print-card-label">Progetto</div><div class="print-card-val">${pname(g.project_id)}</div></div>
+        <div class="print-card-field"><div class="print-card-label">Base d'asta</div><div class="print-card-val">${g.base||'—'}</div></div>
+        <div class="print-card-field"><div class="print-card-label">Pubblicazione</div><div class="print-card-val">${g.published||'—'}</div></div>
+        <div class="print-card-field"><div class="print-card-label">Scadenza</div><div class="print-card-val">${g.deadline||'—'}</div></div>
+        <div class="print-card-field"><div class="print-card-label">Aggiudicatario</div><div class="print-card-val">${g.winner&&g.winner!=='—'?g.winner:'In corso'}</div></div>
+        <div class="print-card-field"><div class="print-card-label">Ribasso</div><div class="print-card-val">${g.discount&&g.discount!=='—'?g.discount+'%':'—'}</div></div>
+        <div class="print-card-field"><div class="print-card-label">Data aggiudicazione</div><div class="print-card-val">${g.award_date||'—'}</div></div>
+        <div class="print-card-field"><div class="print-card-label">Fonte</div><div class="print-card-val">${g.source||'—'}</div></div>
+      </div>
+    </div>`).join('');
+  win.document.write(`<!DOCTYPE html><html><head><title>Report Gare - TunnelCRM</title><style>
+    body{font-family:-apple-system,sans-serif;padding:24px;color:#1a1a1a;max-width:900px;margin:0 auto}
+    h1{font-size:20px;font-weight:600;margin-bottom:4px}
+    .sub{font-size:12px;color:#888;margin-bottom:20px}
+    .print-card{border:1px solid #ddd;border-radius:8px;padding:14px;margin-bottom:14px;break-inside:avoid}
+    .print-card-title{font-size:14px;font-weight:600;margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:8px}
+    .print-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .print-card-field{font-size:12px}
+    .print-card-label{color:#888;margin-bottom:2px;font-size:10px;text-transform:uppercase;letter-spacing:0.05em}
+    .print-card-val{font-weight:500}
+    @media print{button{display:none}}
+  </style></head><body>
+    <h1>Report Gare & Contratti</h1>
+    <div class="sub">TunnelCRM · ${new Date().toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'})} · ${gare.length} gare</div>
+    <button onclick="window.print()" style="margin-bottom:16px;padding:8px 16px;font-size:13px;cursor:pointer;border:1px solid #ccc;border-radius:6px;background:#fff">Stampa / Salva PDF</button>
+    ${rows}
+  </body></html>`);
+  win.document.close();
+}
+
 
 render();
 </script>
