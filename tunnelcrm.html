@@ -291,18 +291,19 @@ function filterP(q) {
 
 function renderGare(c,ta) {
   ta.innerHTML=`<button class="btn" onclick="printGare()">Stampa report</button><button class="btn btn-primary" onclick="openGara()">+ Nuova gara</button>`;
-  c.innerHTML=`<div class="card"><table class="table"><thead><tr><th>Progetto</th><th>Riferimento bando</th><th>Base d'asta</th><th>Scadenza</th><th>Aggiudicatario</th><th>Ribasso</th><th>Data aggiud.</th><th>Fonte</th><th></th></tr></thead><tbody>
+  c.innerHTML=`<div class="card"><table class="table"><thead><tr><th>Progetto</th><th>Tipo tunnel</th><th>Riferimento bando</th><th>Base d'asta</th><th>Scadenza</th><th>Aggiudicatario</th><th>Ribasso</th><th>Data aggiud.</th><th>Fonte</th><th></th></tr></thead><tbody>
     ${gare.length?gare.map(g=>`<tr>
       <td><button class="link-btn" onclick="go('projects',${g.project_id})">${pname(g.project_id)}</button></td>
+      <td style="font-size:11px">${g.tipo_tunnel||'—'}</td>
       <td style="font-size:11px;color:var(--text2)">${g.ref||''}</td>
       <td>${g.base||''}</td>
-      <td>${g.deadline||''}</td>
+      <td style="${deadlineStyle(g.deadline)}">${g.deadline||''}</td>
       <td style="font-weight:${g.winner&&g.winner!=='—'?'500':'400'}">${g.winner&&g.winner!=='—'?g.winner:'<span style="color:var(--text3);font-style:italic">In corso</span>'}</td>
       <td>${g.discount||'—'}</td>
       <td>${g.award_date||'—'}</td>
       <td style="font-size:11px;color:var(--text2)">${g.source||''}</td>
       <td><button class="btn btn-sm" onclick="openEditGara(${g.id})">Modifica</button></td>
-    </tr>`).join(''):`<tr><td colspan="9" class="empty">Nessuna gara registrata.</td></tr>`}
+    </tr>`).join(''):`<tr><td colspan="10" class="empty">Nessuna gara registrata.</td></tr>`}
   </tbody></table></div>`;
 }
 
@@ -497,6 +498,7 @@ function openGara(pid=null) {
   </div>
   <div class="fg"><label class="fl">Importo base d'asta</label><input id="g-base" placeholder="Es: 500M EUR"></div>
   <div class="fg"><label class="fl">Lotto</label><input id="g-lot" placeholder="Es: Lotto 2 – scavo principale"></div>
+  <div class="fg"><label class="fl">Tipo tunnel</label><select id="g-tipo"><option value="">— Seleziona —</option><option>Ferroviario</option><option>Stradale</option><option>Metropolitana</option><option>Idraulico</option><option>Minerario</option><option>Altro</option></select></div>
   <div class="fg"><label class="fl">Aggiudicatario (vuoto se gara in corso)</label><input id="g-winner" placeholder="Es: Webuild / Salini JV"></div>
   <div class="fr">
     <div class="fg"><label class="fl">Data aggiudicazione</label><input id="g-adate" type="date"></div>
@@ -518,6 +520,7 @@ async function openEditGara(id) {
   </div>
   <div class="fg"><label class="fl">Importo base d'asta</label><input id="g-base" value="${g.base||''}"></div>
   <div class="fg"><label class="fl">Lotto</label><input id="g-lot" value="${g.lot||''}"></div>
+  <div class="fg"><label class="fl">Tipo tunnel</label><select id="g-tipo"><option value="">— Seleziona —</option>${['Ferroviario','Stradale','Metropolitana','Idraulico','Minerario','Altro'].map(t=>'<option'+(g.tipo_tunnel===t?' selected':'')+'>'+t+'</option>').join('')}</select></div>
   <div class="fg"><label class="fl">Aggiudicatario</label><input id="g-winner" value="${g.winner&&g.winner!=='—'?g.winner:''}"></div>
   <div class="fr">
     <div class="fg"><label class="fl">Data aggiudicazione</label><input id="g-adate" type="date" value="${g.award_date||''}"></div>
@@ -531,7 +534,7 @@ async function openEditGara(id) {
 async function updateGara(id) {
   const pid=v('g-pid')?parseInt(v('g-pid')):null;
   const winner=v('g-winner')||'—';
-  const obj={project_id:pid,ref:v('g-ref'),published:v('g-pub')||null,deadline:v('g-dead')||null,base:v('g-base'),lot:v('g-lot'),winner,award_date:v('g-adate')||null,discount:v('g-discount')||'—',source:v('g-source'),link:v('g-link')||'#'};
+  const obj={project_id:pid,ref:v('g-ref'),published:v('g-pub')||null,deadline:v('g-dead')||null,base:v('g-base'),lot:v('g-lot'),tipo_tunnel:v('g-tipo')||null,winner,award_date:v('g-adate')||null,discount:v('g-discount')||'—',source:v('g-source'),link:v('g-link')||'#'};
   await sb.from('gare').update(obj).eq('id',id);
   if(winner&&winner!=='—'&&pid) {
     await sb.from('projects').update({phase:'aggiudicato',gc:winner}).eq('id',pid);
@@ -543,7 +546,7 @@ async function saveGara() {
   const pid=v('g-pid')?parseInt(v('g-pid')):null;
   const winner=v('g-winner')||'—';
   const adate=v('g-adate')||null;
-  const obj={project_id:pid,ref:v('g-ref'),published:v('g-pub')||null,deadline:v('g-dead')||null,base:v('g-base'),lot:v('g-lot'),winner,award_date:adate,discount:v('g-discount')||'—',source:v('g-source'),link:v('g-link')||'#'};
+  const obj={project_id:pid,ref:v('g-ref'),published:v('g-pub')||null,deadline:v('g-dead')||null,base:v('g-base'),lot:v('g-lot'),tipo_tunnel:v('g-tipo')||null,winner,award_date:adate,discount:v('g-discount')||'—',source:v('g-source'),link:v('g-link')||'#'};
   await sb.from('gare').insert([obj]);
   if(winner&&winner!=='—') {
     await sb.from('projects').update({phase:'aggiudicato',gc:winner}).eq('id',pid);
@@ -706,6 +709,17 @@ function printGare() {
     ${rows}
   </body></html>`);
   win.document.close();
+}
+
+
+function deadlineStyle(d) {
+  if(!d) return '';
+  const t=today();
+  if(d===t) return 'background:#d4edda;color:#155724;font-weight:600;border-radius:4px;padding:4px 8px';
+  const diff=(new Date(d)-new Date(t))/(1000*60*60*24);
+  if(diff>0&&diff<=7) return 'background:#fff3cd;color:#856404;font-weight:600;border-radius:4px;padding:4px 8px';
+  if(diff<0) return 'background:#f8d7da;color:#721c24;font-weight:600;border-radius:4px;padding:4px 8px';
+  return '';
 }
 
 
