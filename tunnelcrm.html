@@ -566,7 +566,7 @@ Cerca e fornisci informazioni aggiornate su: "${q}"
 Rispondi SOLO con un oggetto JSON (nessun testo fuori), formato:
 {"results":[{"title":"...","source":"...","date":"YYYY-MM-DD","excerpt":"...","project":"nome progetto se identificabile","relevance":"alta|media"}]}
 
-Fornisci 3-4 risultati pertinenti e informativi. L'excerpt deve essere sostanzioso (2-4 frasi). Fonti tipiche: Tunnels & Tunnelling, ITA-AITES, NCE, ENR, TED EU, LinkedIn, comunicati costruttori.`}]}
+Fornisci 3-4 risultati pertinenti e informativi. L\`excerpt deve essere sostanzioso (2-4 frasi). Fonti tipiche: Tunnels & Tunnelling, ITA-AITES, NCE, ENR, TED EU, LinkedIn, comunicati costruttori.\`}]}
     });
     const d=await res.json();
     const txt=(d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
