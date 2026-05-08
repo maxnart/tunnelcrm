@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TunnelCRM</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;color:#1a1a1a;font-size:14px}
+:root{--bg:#ffffff;--bg2:#f5f4f0;--bg3:#eceae4;--border:#e0ddd6;--border2:#ccc9c0;--text:#1a1a1a;--text2:#6b6860;--text3:#9b9890;--blue:#1a6bb5;--blue-bg:#e8f0fa;--green:#2d7d4f;--green-bg:#e8f5ee;--amber:#8a5c0a;--amber-bg:#fdf3e0;--red:#b53a3a;--red-bg:#fce8e8;--purple:#4a3a9e;--purple-bg:#eeedfb;--radius:8px;--radius-lg:12px}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:210px;background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.logo{padding:18px 16px 14px;border-bottom:1px solid var(--border)}
+.logo h1{font-size:15px;font-weight:600;letter-spacing:0.03em;color:var(--text)}
+.logo p{font-size:11px;color:var(--text3);margin-top:2px}
+.nav{padding:10px 8px;flex:1;overflow-y:auto}
+.nav-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;padding:10px 8px 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--radius);cursor:pointer;font-size:13px;color:var(--text2);transition:all 0.1s;position:relative}
+.nav-item:hover{background:var(--bg2);color:var(--text)}
+.nav-item.active{background:var(--bg2);color:var(--text);font-weight:500}
+.nav-item svg{flex-shrink:0;opacity:0.7}
+.nav-item.active svg{opacity:1}
+.badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:600;padding:1px 6px;border-radius:99px;min-width:18px;text-align:center}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg2)}
+.topbar{padding:12px 20px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.topbar-title{font-size:15px;font-weight:600;flex:1;color:var(--text)}
+.content{flex:1;overflow-y:auto;padding:20px}
+input,select,textarea{font-family:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;width:100%;transition:border 0.15s}
+input:focus,select:focus,textarea:focus{border-color:var(--blue)}
+.btn{font-family:inherit;font-size:12px;font-weight:500;padding:7px 14px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);cursor:pointer;white-space:nowrap;transition:all 0.1s}
+.btn:hover{background:var(--bg2)}
+.btn-primary{background:var(--text);color:var(--bg);border-color:var(--text)}
+.btn-primary:hover{opacity:0.85}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-danger{background:var(--red-bg);color:var(--red);border-color:#f5c0c0}
+.btn-danger:hover{background:#f9d5d5}
+.search-input{max-width:260px;font-size:12px}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px}
+.stat-label{font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:500}
+.stat-val{font-size:26px;font-weight:600;line-height:1}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-size:13px;font-weight:600;color:var(--text)}
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.table{width:100%;border-collapse:collapse;font-size:12px}
+.table th{text-align:left;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;padding:8px 12px;background:var(--bg2);border-bottom:1px solid var(--border)}
+.table td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+.table tbody tr:hover td{background:var(--bg2)}
+.table tbody tr:last-child td{border-bottom:none}
+.badge-fase{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px}
+.fase-gara{background:var(--amber-bg);color:var(--amber)}
+.fase-cantiere{background:var(--green-bg);color:var(--green)}
+.fase-aggiudicato{background:var(--blue-bg);color:var(--blue)}
+.fase-progettazione{background:var(--purple-bg);color:var(--purple)}
+.fase-completato{background:var(--bg3);color:var(--text2)}
+.fase-studio{background:#fbeaf0;color:#72243e}
+.pname{font-weight:500;color:var(--text)}
+.psub{font-size:11px;color:var(--text3);margin-top:2px}
+.news-list{display:flex;flex-direction:column;gap:8px}
+.news-item{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;cursor:default}
+.news-meta{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap}
+.news-source{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em}
+.news-date{font-size:10px;color:var(--text3)}
+.news-tag{font-size:10px;padding:1px 7px;border-radius:99px;background:var(--bg2);border:1px solid var(--border);color:var(--text2)}
+.news-title{font-size:13px;font-weight:500;margin-bottom:3px}
+.news-proj{font-size:11px;color:var(--text3)}
+.news-excerpt{font-size:12px;color:var(--text2);line-height:1.55;margin-top:5px}
+.rem-list{display:flex;flex-direction:column;gap:8px}
+.rem-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg)}
+.rem-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-red{background:var(--red)}
+.dot-amber{background:#e09010}
+.dot-green{background:var(--green)}
+.rem-body{flex:1}
+.rem-text{font-size:13px;font-weight:500}
+.rem-proj{font-size:11px;color:var(--text3);margin-top:2px}
+.rem-due{font-size:11px;color:var(--text3);white-space:nowrap}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:1000}
+.modal{background:var(--bg);border-radius:var(--radius-lg);border:1px solid var(--border);padding:22px;width:500px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.15)}
+.modal-title{font-size:15px;font-weight:600;margin-bottom:18px}
+.fg{margin-bottom:12px}
+.fl{display:block;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.factions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.df{background:var(--bg2);padding:10px 12px;border-radius:var(--radius)}
+.df-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px}
+.df-val{font-size:13px;font-weight:500}
+.notes-box{background:var(--bg2);border-radius:var(--radius);padding:10px 12px;font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:16px}
+.search-panel{max-width:100%}
+.search-big{width:100%;padding:10px 14px;font-size:14px;border:1px solid var(--border2);border-radius:var(--radius-lg);margin-bottom:10px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.chip{padding:5px 12px;font-size:11px;font-weight:500;border:1px solid var(--border2);border-radius:99px;cursor:pointer;color:var(--text2);background:var(--bg);transition:all 0.1s}
+.chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.sr{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;margin-bottom:8px}
+.sr-title{font-size:13px;font-weight:500;margin-bottom:3px}
+.sr-meta{font-size:11px;color:var(--text3);margin-bottom:6px}
+.sr-excerpt{font-size:12px;color:var(--text2);line-height:1.55}
+.sr-actions{display:flex;gap:6px;margin-top:8px}
+.loading{display:flex;gap:5px;align-items:center;padding:24px 0}
+.ld{width:7px;height:7px;border-radius:50%;background:var(--text3);animation:ld 1.2s ease-in-out infinite}
+.ld:nth-child(2){animation-delay:.2s}.ld:nth-child(3){animation-delay:.4s}
+@keyframes ld{0%,80%,100%{opacity:.3;transform:scale(.9)}40%{opacity:1;transform:scale(1.1)}}
+.empty{font-size:13px;color:var(--text3);padding:16px 0;text-align:center}
+.link-btn{background:none;border:none;color:var(--blue);cursor:pointer;font-size:12px;font-family:inherit;padding:0;text-decoration:underline}
+.separator{border:none;border-top:1px solid var(--border);margin:18px 0}
+.tag-aggiudicazione{background:var(--blue-bg);color:var(--blue)}
+.tag-gara{background:var(--amber-bg);color:var(--amber)}
+.tag-cantiere{background:var(--green-bg);color:var(--green)}
+.tag-milestone{background:var(--purple-bg);color:var(--purple)}
+.tag-incidente{background:var(--red-bg);color:var(--red)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar">
+    <div class="logo">
+      <h1>TunnelCRM</h1>
+      <p>Global project tracker</p>
+    </div>
+    <div class="nav">
+      <div class="nav-label">Panoramica</div>
+      <div class="nav-item active" id="nav-dashboard" onclick="go('dashboard')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-label">Dati</div>
+      <div class="nav-item" id="nav-projects" onclick="go('projects')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h12"/></svg>
+        Progetti
+      </div>
+      <div class="nav-item" id="nav-gare" onclick="go('gare')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M7.8 4H4v16h16V4h-3.8M9 4h6a1 1 0 010 2H9a1 1 0 010-2z"/></svg>
+        Gare & Contratti
+      </div>
+      <div class="nav-item" id="nav-news" onclick="go('news')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zM3 9h18"/></svg>
+        News & Log
+      </div>
+      <div class="nav-item" id="nav-reminders" onclick="go('reminders')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+        Reminder
+        <span class="badge" id="rem-badge" style="display:none">0</span>
+      </div>
+      <div class="nav-label">Strumenti</div>
+      <div class="nav-item" id="nav-search" onclick="go('search')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        Ricerca web
+      </div>
+    </div>
+  </div>
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title" id="topbar-title">Dashboard</span>
+      <div id="topbar-actions"></div>
+    </div>
+    <div class="content" id="content">
+      <div class="loading"><div class="ld"></div><div class="ld"></div><div class="ld"></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPA_URL = 'https://jpbysnogsbkpimpxrpgl.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwYnlzbm9nc2JrcGltcHhycGdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNTI5NDIsImV4cCI6MjA5MzgyODk0Mn0.wQfi8ksOI5hBAZW0GNLMJRp-jlqZTwsCTSvqC_qqVMQ';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+let view = 'dashboard';
+let detailId = null;
+let projects = [], gare = [], news = [], reminders = [];
+
+async function loadAll() {
+  const [p,g,n,r] = await Promise.all([
+    sb.from('projects').select('*').order('created_at',{ascending:false}),
+    sb.from('gare').select('*').order('created_at',{ascending:false}),
+    sb.from('news').select('*').order('date',{ascending:false}),
+    sb.from('reminders').select('*').order('due',{ascending:true})
+  ]);
+  projects = p.data||[]; gare = g.data||[]; news = n.data||[]; reminders = r.data||[];
+  updateBadge();
+}
+
+function updateBadge() {
+  const open = reminders.filter(r=>r.status==='open').length;
+  const b = document.getElementById('rem-badge');
+  b.textContent = open; b.style.display = open>0?'':'none';
+}
+
+function pname(id) { const p=projects.find(x=>x.id==id); return p?p.name:'—'; }
+
+function faseClass(f) {
+  const m={gara:'fase-gara',cantiere:'fase-cantiere',aggiudicato:'fase-aggiudicato',progettazione:'fase-progettazione',completato:'fase-completato',studio:'fase-studio'};
+  return m[f]||'fase-studio';
+}
+function faseBadge(f) { return `<span class="badge-fase ${faseClass(f)}">${f||''}</span>`; }
+function tagBadge(t) { return `<span class="news-tag tag-${t}">${t}</span>`; }
+
+function go(v, id=null) {
+  view=v; detailId=id;
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  const nav=document.getElementById('nav-'+v);
+  if(nav) nav.classList.add('active');
+  render();
+}
+
+async function render() {
+  await loadAll();
+  const c=document.getElementById('content');
+  const ta=document.getElementById('topbar-actions');
+  ta.innerHTML='';
+  if(detailId) { renderDetail(c,ta); return; }
+  const titles={dashboard:'Dashboard',projects:'Progetti',gare:'Gare & Contratti',news:'News & Log',reminders:'Reminder',search:'Ricerca web'};
+  document.getElementById('topbar-title').textContent=titles[view]||'';
+  if(view==='dashboard') renderDashboard(c,ta);
+  else if(view==='projects') renderProjects(c,ta);
+  else if(view==='gare') renderGare(c,ta);
+  else if(view==='news') renderNews(c,ta);
+  else if(view==='reminders') renderReminders(c,ta);
+  else if(view==='search') renderSearch(c,ta);
+}
+
+function renderDashboard(c,ta) {
+  const openRem=reminders.filter(r=>r.status==='open');
+  const gareAperte=gare.filter(g=>!g.winner||g.winner==='—'||g.winner==='');
+  c.innerHTML=`
+  <div class="stats-row">
+    <div class="stat"><div class="stat-label">Progetti tracciati</div><div class="stat-val">${projects.length}</div><div class="stat-sub">nel mondo</div></div>
+    <div class="stat"><div class="stat-label">In cantiere</div><div class="stat-val">${projects.filter(p=>p.phase==='cantiere').length}</div><div class="stat-sub">attivi ora</div></div>
+    <div class="stat"><div class="stat-label">Gare aperte</div><div class="stat-val">${gareAperte.length}</div><div class="stat-sub">da monitorare</div></div>
+    <div class="stat"><div class="stat-label">Reminder aperti</div><div class="stat-val" style="${openRem.length>0?'color:var(--red)':''}">${openRem.length}</div><div class="stat-sub">da gestire</div></div>
+  </div>
+  <div class="section-hdr"><span class="section-title">Ultimi aggiornamenti</span><button class="btn btn-sm" onclick="go('news')">Vedi tutti →</button></div>
+  <div class="news-list" style="margin-bottom:20px">
+    ${news.slice(0,4).map(n=>`<div class="news-item">
+      <div class="news-meta"><span class="news-source">${n.source||''}</span><span class="news-date">${n.date||''}</span>${tagBadge(n.tag||'')}</div>
+      <div class="news-title">${n.title}</div>
+      <div class="news-proj">${pname(n.project_id)}</div>
+    </div>`).join('')||'<div class="empty">Nessun aggiornamento. Aggiungi la prima news.</div>'}
+  </div>
+  <div class="section-hdr"><span class="section-title">Reminder in scadenza</span><button class="btn btn-sm" onclick="go('reminders')">Vedi tutti →</button></div>
+  <div class="rem-list">
+    ${openRem.slice(0,3).map(r=>`<div class="rem-item">
+      <div class="rem-dot dot-${r.urgency}"></div>
+      <div class="rem-body"><div class="rem-text">${r.text}</div><div class="rem-proj">${pname(r.project_id)}</div></div>
+      <div class="rem-due">Scad. ${r.due||'—'}</div>
+      <button class="btn btn-sm" onclick="closeReminder(${r.id})">✓ Chiudi</button>
+    </div>`).join('')||'<div class="empty">Nessun reminder aperto.</div>'}
+  </div>`;
+}
+
+function renderProjects(c,ta) {
+  ta.innerHTML=`<input class="search-input" placeholder="Cerca..." oninput="filterP(this.value)" id="psearch"><button class="btn btn-primary" onclick="openProject()">+ Nuovo progetto</button>`;
+  c.innerHTML=`<div class="card"><table class="table"><thead><tr><th>Progetto</th><th>Paese</th><th>Tipo</th><th>Km</th><th>Fase</th><th>GC aggiudicatario</th><th>Valore</th><th></th></tr></thead><tbody id="ptbody">${pRows(projects)}</tbody></table></div>`;
+}
+function pRows(list) {
+  if(!list.length) return `<tr><td colspan="8" class="empty">Nessun progetto. Aggiungine uno.</td></tr>`;
+  return list.map(p=>`<tr>
+    <td><div class="pname">${p.name}</div><div class="psub">${p.client||''}</div></td>
+    <td style="color:var(--text2)">${p.country||''}</td>
+    <td>${p.type||''}</td>
+    <td>${p.km||''}</td>
+    <td>${faseBadge(p.phase)}</td>
+    <td style="color:var(--text2);font-size:11px">${p.gc||'—'}</td>
+    <td>${p.value||''}</td>
+    <td><button class="btn btn-sm" onclick="go('projects',${p.id})">Apri →</button></td>
+  </tr>`).join('');
+}
+function filterP(q) {
+  const f=projects.filter(p=>[p.name,p.country,p.gc,p.client,p.type].some(x=>(x||'').toLowerCase().includes(q.toLowerCase())));
+  document.getElementById('ptbody').innerHTML=pRows(f);
+}
+
+function renderGare(c,ta) {
+  ta.innerHTML=`<button class="btn btn-primary" onclick="openGara()">+ Nuova gara</button>`;
+  c.innerHTML=`<div class="card"><table class="table"><thead><tr><th>Progetto</th><th>Riferimento bando</th><th>Base d'asta</th><th>Scadenza</th><th>Aggiudicatario</th><th>Ribasso</th><th>Data aggiud.</th><th>Fonte</th></tr></thead><tbody>
+    ${gare.length?gare.map(g=>`<tr>
+      <td><button class="link-btn" onclick="go('projects',${g.project_id})">${pname(g.project_id)}</button></td>
+      <td style="font-size:11px;color:var(--text2)">${g.ref||''}</td>
+      <td>${g.base||''}</td>
+      <td>${g.deadline||''}</td>
+      <td style="font-weight:${g.winner&&g.winner!=='—'?'500':'400'}">${g.winner&&g.winner!=='—'?g.winner:'<span style="color:var(--text3);font-style:italic">In corso</span>'}</td>
+      <td>${g.discount||'—'}</td>
+      <td>${g.award_date||'—'}</td>
+      <td style="font-size:11px;color:var(--text2)">${g.source||''}</td>
+    </tr>`).join(''):`<tr><td colspan="8" class="empty">Nessuna gara registrata.</td></tr>`}
+  </tbody></table></div>`;
+}
+
+function renderNews(c,ta) {
+  ta.innerHTML=`<button class="btn btn-primary" onclick="openNews(null)">+ Aggiungi news</button>`;
+  c.innerHTML=`<div class="news-list">
+    ${news.length?news.map(n=>`<div class="news-item">
+      <div class="news-meta"><span class="news-source">${n.source||''}</span><span class="news-date">${n.date||''}</span>${tagBadge(n.tag||'')}
+        <span style="margin-left:auto;font-size:11px;color:var(--text3)">${n.author||''}</span>
+      </div>
+      <div class="news-title">${n.title}</div>
+      <div class="news-proj">${pname(n.project_id)}</div>
+      ${n.excerpt?`<div class="news-excerpt">${n.excerpt}</div>`:''}
+      ${n.link&&n.link!='#'?`<a href="${n.link}" target="_blank" style="font-size:11px;color:var(--blue);margin-top:5px;display:inline-block">Apri fonte →</a>`:''}
+    </div>`).join(''):`<div class="empty">Nessuna news. Aggiungi il primo aggiornamento.</div>`}
+  </div>`;
+}
+
+function renderReminders(c,ta) {
+  ta.innerHTML=`<button class="btn btn-primary" onclick="openReminder(null)">+ Nuovo reminder</button>`;
+  const open=reminders.filter(r=>r.status==='open');
+  const closed=reminders.filter(r=>r.status==='closed');
+  c.innerHTML=`
+  <div class="section-hdr"><span class="section-title">Aperti (${open.length})</span></div>
+  <div class="rem-list" style="margin-bottom:20px">
+    ${open.length?open.map(r=>`<div class="rem-item">
+      <div class="rem-dot dot-${r.urgency}"></div>
+      <div class="rem-body"><div class="rem-text">${r.text}</div><div class="rem-proj">${pname(r.project_id)}</div></div>
+      <div class="rem-due">Scad. ${r.due||'—'}</div>
+      <button class="btn btn-sm" onclick="closeReminder(${r.id})">✓ Chiudi</button>
+    </div>`).join(''):`<div class="empty">Nessun reminder aperto.</div>`}
+  </div>
+  ${closed.length?`<div class="section-hdr"><span class="section-title" style="color:var(--text3)">Chiusi (${closed.length})</span></div>
+  <div class="rem-list">
+    ${closed.map(r=>`<div class="rem-item" style="opacity:0.45">
+      <div class="rem-dot" style="background:var(--text3)"></div>
+      <div class="rem-body" style="text-decoration:line-through"><div class="rem-text">${r.text}</div><div class="rem-proj">${pname(r.project_id)}</div></div>
+      <div class="rem-due">${r.due||''}</div>
+    </div>`).join('')}
+  </div>`:''}`;
+}
+
+function renderSearch(c,ta) {
+  c.innerHTML=`<div class="search-panel">
+    <input class="search-big" id="wq" placeholder="Es: tunnel rail awarded 2025 Europe, TBM breakthrough..." onkeydown="if(event.key==='Enter')doSearch()">
+    <div class="chips">
+      <span class="chip on" onclick="this.classList.toggle('on')">Web generale</span>
+      <span class="chip on" onclick="this.classList.toggle('on')">LinkedIn</span>
+      <span class="chip on" onclick="this.classList.toggle('on')">Tunnels & Tunnelling</span>
+      <span class="chip" onclick="this.classList.toggle('on')">TED / Gare EU</span>
+      <span class="chip" onclick="this.classList.toggle('on')">ITA-AITES</span>
+    </div>
+    <button class="btn btn-primary" onclick="doSearch()">Cerca</button>
+    <div id="sresults" style="margin-top:16px"></div>
+  </div>`;
+}
+
+async function renderDetail(c,ta) {
+  const p=projects.find(x=>x.id==detailId);
+  if(!p) { go('projects'); return; }
+  document.getElementById('topbar-title').textContent=p.name;
+  ta.innerHTML=`<button class="btn" onclick="go('projects')">← Torna</button><button class="btn btn-sm" onclick="openNews(${p.id})">+ News</button><button class="btn btn-sm" onclick="openReminder(${p.id})">+ Reminder</button><button class="btn btn-sm" onclick="openEditProject(${p.id})">Modifica</button>`;
+  const pn=news.filter(n=>n.project_id==p.id);
+  const pg=gare.filter(g=>g.project_id==p.id);
+  const pr=reminders.filter(r=>r.project_id==p.id&&r.status==='open');
+  c.innerHTML=`
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+    <div>
+      <div style="font-size:18px;font-weight:600;margin-bottom:4px">${p.name}</div>
+      <div style="font-size:13px;color:var(--text2)">${p.country||''} · ${p.type||''} · ${p.km?p.km+' km':''}</div>
+    </div>
+    ${faseBadge(p.phase)}
+  </div>
+  <div class="detail-grid">
+    <div class="df"><div class="df-label">Committente</div><div class="df-val">${p.client||'—'}</div></div>
+    <div class="df"><div class="df-label">Progettista / Consulente</div><div class="df-val">${p.designer||'—'}</div></div>
+    <div class="df"><div class="df-label">General contractor</div><div class="df-val">${p.gc||'—'}</div></div>
+    <div class="df"><div class="df-label">Valore contrattuale</div><div class="df-val">${p.value||'—'}</div></div>
+    <div class="df"><div class="df-label">TBM prevista</div><div class="df-val">${p.tbm?'Sì':'No'}</div></div>
+    <div class="df"><div class="df-label">Lunghezza</div><div class="df-val">${p.km?p.km+' km':'—'}</div></div>
+  </div>
+  ${p.notes?`<div class="notes-box">${p.notes}</div>`:''}
+  ${pr.length?`<div class="section-hdr" style="margin-bottom:8px"><span class="section-title">Reminder aperti</span></div>
+  <div class="rem-list" style="margin-bottom:16px">${pr.map(r=>`<div class="rem-item">
+    <div class="rem-dot dot-${r.urgency}"></div>
+    <div class="rem-body"><div class="rem-text">${r.text}</div></div>
+    <div class="rem-due">Scad. ${r.due||'—'}</div>
+    <button class="btn btn-sm" onclick="closeReminder(${r.id})">✓</button>
+  </div>`).join('')}</div>`:''}
+  ${pg.length?`<div class="section-hdr"><span class="section-title">Gare & Contratti</span><button class="btn btn-sm" onclick="openGara(${p.id})">+ Aggiungi</button></div>
+  <div class="card" style="margin-bottom:16px"><table class="table"><thead><tr><th>Riferimento</th><th>Base d'asta</th><th>Scadenza</th><th>Aggiudicatario</th><th>Ribasso</th></tr></thead><tbody>
+    ${pg.map(g=>`<tr>
+      <td style="font-size:11px">${g.ref||''}</td>
+      <td>${g.base||''}</td>
+      <td>${g.deadline||''}</td>
+      <td style="font-weight:500">${g.winner&&g.winner!=='—'?g.winner:'<span style="color:var(--text3);font-weight:400;font-style:italic">In corso</span>'}</td>
+      <td>${g.discount||'—'}</td>
+    </tr>`).join('')}
+  </tbody></table></div>`:''}
+  <div class="section-hdr"><span class="section-title">Log aggiornamenti (${pn.length})</span><button class="btn btn-sm" onclick="openNews(${p.id})">+ Aggiungi</button></div>
+  <div class="news-list">
+    ${pn.length?pn.map(n=>`<div class="news-item">
+      <div class="news-meta"><span class="news-source">${n.source||''}</span><span class="news-date">${n.date||''}</span>${tagBadge(n.tag||'')}<span style="margin-left:auto;font-size:11px;color:var(--text3)">${n.author||''}</span></div>
+      <div class="news-title">${n.title}</div>
+      ${n.excerpt?`<div class="news-excerpt">${n.excerpt}</div>`:''}
+      ${n.link&&n.link!='#'?`<a href="${n.link}" target="_blank" style="font-size:11px;color:var(--blue);margin-top:5px;display:inline-block">Apri fonte →</a>`:''}
+    </div>`).join(''):`<div class="empty">Nessun aggiornamento registrato per questo progetto.</div>`}
+  </div>`;
+}
+
+function modal(html) {
+  const ov=document.createElement('div');
+  ov.className='modal-overlay'; ov.id='mov';
+  ov.innerHTML=`<div class="modal">${html}</div>`;
+  ov.addEventListener('click',e=>{if(e.target===ov)closeModal();});
+  document.body.appendChild(ov);
+}
+function closeModal(){const m=document.getElementById('mov');if(m)m.remove();}
+
+function projectOptions(selId=null) {
+  return projects.map(p=>`<option value="${p.id}"${p.id==selId?' selected':''}>${p.name}</option>`).join('');
+}
+
+function openProject() {
+  modal(`<div class="modal-title">Nuovo progetto</div>
+  <div class="fg"><label class="fl">Nome progetto *</label><input id="f-name" placeholder="Es: Brennero Base Tunnel"></div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Paese</label><input id="f-country" placeholder="Italia / Austria"></div>
+    <div class="fg"><label class="fl">Città / Regione</label><input id="f-city"></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Tipo</label><select id="f-type"><option>Ferroviario</option><option>Metropolitana</option><option>Stradale</option><option>Idraulico</option><option>Altro</option></select></div>
+    <div class="fg"><label class="fl">Lunghezza (km)</label><input id="f-km" type="number" step="0.1" placeholder="55.5"></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Valore</label><input id="f-value" placeholder="Es: 1.2B EUR"></div>
+    <div class="fg"><label class="fl">Fase attuale</label><select id="f-phase"><option value="studio">Studio</option><option value="progettazione">Progettazione</option><option value="gara">Gara</option><option value="aggiudicato">Aggiudicato</option><option value="cantiere">Cantiere</option><option value="completato">Completato</option></select></div>
+  </div>
+  <div class="fg"><label class="fl">Committente</label><input id="f-client"></div>
+  <div class="fg"><label class="fl">Progettista / Consulente</label><input id="f-designer"></div>
+  <div class="fg"><label class="fl">General contractor (se aggiudicato)</label><input id="f-gc"></div>
+  <div class="fg"><label class="fl">TBM prevista</label><select id="f-tbm"><option value="false">No</option><option value="true">Sì</option></select></div>
+  <div class="fg"><label class="fl">Note libere</label><textarea id="f-notes" rows="3"></textarea></div>
+  <div class="factions"><button class="btn" onclick="closeModal()">Annulla</button><button class="btn btn-primary" onclick="saveProject()">Salva progetto</button></div>`);
+}
+
+async function openEditProject(id) {
+  const p=projects.find(x=>x.id==id);
+  if(!p) return;
+  modal(`<div class="modal-title">Modifica progetto</div>
+  <div class="fg"><label class="fl">Nome progetto *</label><input id="f-name" value="${p.name||''}"></div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Paese</label><input id="f-country" value="${p.country||''}"></div>
+    <div class="fg"><label class="fl">Città / Regione</label><input id="f-city" value="${p.city||''}"></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Tipo</label><select id="f-type">${['Ferroviario','Metropolitana','Stradale','Idraulico','Altro'].map(t=>`<option${p.type===t?' selected':''}>${t}</option>`).join('')}</select></div>
+    <div class="fg"><label class="fl">Lunghezza (km)</label><input id="f-km" type="number" step="0.1" value="${p.km||''}"></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Valore</label><input id="f-value" value="${p.value||''}"></div>
+    <div class="fg"><label class="fl">Fase attuale</label><select id="f-phase">${['studio','progettazione','gara','aggiudicato','cantiere','completato'].map(f=>`<option value="${f}"${p.phase===f?' selected':''}>${f}</option>`).join('')}</select></div>
+  </div>
+  <div class="fg"><label class="fl">Committente</label><input id="f-client" value="${p.client||''}"></div>
+  <div class="fg"><label class="fl">Progettista / Consulente</label><input id="f-designer" value="${p.designer||''}"></div>
+  <div class="fg"><label class="fl">General contractor</label><input id="f-gc" value="${p.gc||''}"></div>
+  <div class="fg"><label class="fl">TBM prevista</label><select id="f-tbm"><option value="false"${!p.tbm?' selected':''}>No</option><option value="true"${p.tbm?' selected':''}>Sì</option></select></div>
+  <div class="fg"><label class="fl">Note libere</label><textarea id="f-notes" rows="3">${p.notes||''}</textarea></div>
+  <div class="factions"><button class="btn" onclick="closeModal()">Annulla</button><button class="btn btn-primary" onclick="updateProject(${id})">Aggiorna</button></div>`);
+}
+
+async function saveProject() {
+  const name=document.getElementById('f-name').value.trim();
+  if(!name) return alert('Il nome è obbligatorio');
+  const obj={name,country:v('f-country'),city:v('f-city'),type:v('f-type'),km:parseFloat(v('f-km'))||null,value:v('f-value'),phase:v('f-phase'),client:v('f-client'),designer:v('f-designer'),gc:v('f-gc'),tbm:v('f-tbm')==='true',notes:v('f-notes')};
+  await sb.from('projects').insert([obj]);
+  closeModal(); render();
+}
+async function updateProject(id) {
+  const obj={name:v('f-name'),country:v('f-country'),city:v('f-city'),type:v('f-type'),km:parseFloat(v('f-km'))||null,value:v('f-value'),phase:v('f-phase'),client:v('f-client'),designer:v('f-designer'),gc:v('f-gc'),tbm:v('f-tbm')==='true',notes:v('f-notes')};
+  await sb.from('projects').update(obj).eq('id',id);
+  closeModal(); render();
+}
+
+function openGara(pid=null) {
+  modal(`<div class="modal-title">Nuova gara / contratto</div>
+  <div class="fg"><label class="fl">Progetto collegato *</label><select id="g-pid">${projectOptions(pid)}</select></div>
+  <div class="fg"><label class="fl">Riferimento bando</label><input id="g-ref" placeholder="Es: TELT-2023-LC-04"></div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Data pubblicazione</label><input id="g-pub" type="date"></div>
+    <div class="fg"><label class="fl">Scadenza offerte</label><input id="g-dead" type="date"></div>
+  </div>
+  <div class="fg"><label class="fl">Importo base d'asta</label><input id="g-base" placeholder="Es: 500M EUR"></div>
+  <div class="fg"><label class="fl">Lotto</label><input id="g-lot" placeholder="Es: Lotto 2 – scavo principale"></div>
+  <div class="fg"><label class="fl">Aggiudicatario (vuoto se gara in corso)</label><input id="g-winner" placeholder="Es: Webuild / Salini JV"></div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Data aggiudicazione</label><input id="g-adate" type="date"></div>
+    <div class="fg"><label class="fl">Ribasso %</label><input id="g-discount" type="number" step="0.01" placeholder="4.2"></div>
+  </div>
+  <div class="fg"><label class="fl">Fonte</label><input id="g-source" placeholder="Es: Tunnels & Tunnelling, TED EU..."></div>
+  <div class="fg"><label class="fl">Link</label><input id="g-link" placeholder="https://..."></div>
+  <div class="factions"><button class="btn" onclick="closeModal()">Annulla</button><button class="btn btn-primary" onclick="saveGara()">Salva</button></div>`);
+}
+async function saveGara() {
+  const pid=parseInt(v('g-pid'));
+  if(!pid) return;
+  const winner=v('g-winner')||'—';
+  const adate=v('g-adate')||null;
+  const obj={project_id:pid,ref:v('g-ref'),published:v('g-pub')||null,deadline:v('g-dead')||null,base:v('g-base'),lot:v('g-lot'),winner,award_date:adate,discount:v('g-discount')||'—',source:v('g-source'),link:v('g-link')||'#'};
+  await sb.from('gare').insert([obj]);
+  if(winner&&winner!=='—') {
+    await sb.from('projects').update({phase:'aggiudicato',gc:winner}).eq('id',pid);
+  }
+  closeModal(); render();
+}
+
+function openNews(pid=null, prefill={}) {
+  modal(`<div class="modal-title">Aggiungi news / aggiornamento</div>
+  <div class="fg"><label class="fl">Progetto collegato</label><select id="n-pid">${projectOptions(pid)}</select></div>
+  <div class="fg"><label class="fl">Titolo *</label><input id="n-title" value="${prefill.title||''}" placeholder="Es: TBM Virginia supera i 14 km"></div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Data</label><input id="n-date" type="date" value="${prefill.date||today()}"></div>
+    <div class="fg"><label class="fl">Fonte</label><input id="n-source" value="${prefill.source||''}" placeholder="LinkedIn / T&T / web..."></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Tag</label><select id="n-tag"><option>milestone</option><option>gara</option><option>aggiudicazione</option><option>cantiere</option><option>incidente</option><option>altro</option></select></div>
+    <div class="fg"><label class="fl">Inserito da</label><input id="n-author" placeholder="Tuo nome"></div>
+  </div>
+  <div class="fg"><label class="fl">Testo / sintesi</label><textarea id="n-excerpt" rows="4" placeholder="Descrivi l'aggiornamento...">${prefill.excerpt||''}</textarea></div>
+  <div class="fg"><label class="fl">Link originale</label><input id="n-link" value="${prefill.link||''}" placeholder="https://..."></div>
+  <div class="factions"><button class="btn" onclick="closeModal()">Annulla</button><button class="btn btn-primary" onclick="saveNews()">Salva</button></div>`);
+}
+async function saveNews() {
+  const title=v('n-title').trim();
+  if(!title) return alert('Il titolo è obbligatorio');
+  const obj={project_id:parseInt(v('n-pid'))||null,title,date:v('n-date')||null,source:v('n-source'),tag:v('n-tag'),author:v('n-author'),excerpt:v('n-excerpt'),link:v('n-link')||'#'};
+  await sb.from('news').insert([obj]);
+  closeModal(); render();
+}
+
+function openReminder(pid=null) {
+  modal(`<div class="modal-title">Nuovo reminder</div>
+  <div class="fg"><label class="fl">Progetto collegato</label><select id="r-pid">${projectOptions(pid)}</select></div>
+  <div class="fg"><label class="fl">Descrizione *</label><input id="r-text" placeholder="Es: Verifica uscita bando Mumbai MTHL"></div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Scadenza</label><input id="r-due" type="date"></div>
+    <div class="fg"><label class="fl">Priorità</label><select id="r-urg"><option value="red">Alta</option><option value="amber">Media</option><option value="green">Bassa</option></select></div>
+  </div>
+  <div class="factions"><button class="btn" onclick="closeModal()">Annulla</button><button class="btn btn-primary" onclick="saveReminder()">Salva</button></div>`);
+}
+async function saveReminder() {
+  const text=v('r-text').trim();
+  if(!text) return alert('La descrizione è obbligatoria');
+  const obj={project_id:parseInt(v('r-pid'))||null,text,due:v('r-due')||null,urgency:v('r-urg'),status:'open'};
+  await sb.from('reminders').insert([obj]);
+  closeModal(); render();
+}
+
+async function closeReminder(id) {
+  await sb.from('reminders').update({status:'closed'}).eq('id',id);
+  render();
+}
+
+async function doSearch() {
+  const q=document.getElementById('wq').value.trim();
+  if(!q) return;
+  const sr=document.getElementById('sresults');
+  sr.innerHTML=`<div class="loading"><div class="ld"></div><div class="ld"></div><div class="ld"></div></div>`;
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1200,
+        messages:[{role:'user',content:`Sei un assistente specializzato nel settore tunnelling e grandi opere sotterranee a livello mondiale.
+Cerca e fornisci informazioni aggiornate su: "${q}"
+
+Rispondi SOLO con un oggetto JSON (nessun testo fuori), formato:
+{"results":[{"title":"...","source":"...","date":"YYYY-MM-DD","excerpt":"...","project":"nome progetto se identificabile","relevance":"alta|media"}]}
+
+Fornisci 3-4 risultati pertinenti e informativi. L'excerpt deve essere sostanzioso (2-4 frasi). Fonti tipiche: Tunnels & Tunnelling, ITA-AITES, NCE, ENR, TED EU, LinkedIn, comunicati costruttori.`}]}
+    });
+    const d=await res.json();
+    const txt=(d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    let parsed;
+    try{parsed=JSON.parse(txt.replace(/```json|```/g,'').trim());}catch(e){parsed=null;}
+    if(parsed&&parsed.results&&parsed.results.length) {
+      sr.innerHTML=parsed.results.map(r=>`<div class="sr">
+        <div class="sr-title">${r.title}</div>
+        <div class="sr-meta">${r.source} · ${r.date} · <span style="color:${r.relevance==='alta'?'var(--green)':'var(--amber)'}">rilevanza ${r.relevance}</span>${r.project?` · <em>${r.project}</em>`:''}</div>
+        <div class="sr-excerpt">${r.excerpt}</div>
+        <div class="sr-actions">
+          <button class="btn btn-sm btn-primary" onclick='prefillNews(${JSON.stringify({title:r.title,source:r.source,date:r.date,excerpt:r.excerpt})})'>Salva come news →</button>
+        </div>
+      </div>`).join('');
+    } else {
+      sr.innerHTML=`<div class="empty">Nessun risultato trovato. Prova a riformulare la query.</div>`;
+    }
+  } catch(e) {
+    sr.innerHTML=`<div class="empty">Errore nella ricerca. Riprova.</div>`;
+  }
+}
+
+function prefillNews(data) {
+  closeModal();
+  openNews(null, data);
+}
+
+function v(id){const el=document.getElementById(id);return el?el.value:'';}
+function today(){return new Date().toISOString().slice(0,10);}
+
+render();
+</script>
+</body>
+</html>
