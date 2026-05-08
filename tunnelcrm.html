@@ -188,7 +188,7 @@ function updateBadge() {
   b.textContent = open; b.style.display = open>0?'':'none';
 }
 
-function pname(id) { const p=projects.find(x=>x.id==id); return p?p.name:'—'; }
+function pname(id) { if(!id) return '—'; const p=projects.find(x=>x.id==id); return p?p.name:'—'; }
 
 function faseClass(f) {
   const m={gara:'fase-gara',cantiere:'fase-cantiere',aggiudicato:'fase-aggiudicato',progettazione:'fase-progettazione',completato:'fase-completato',studio:'fase-studio'};
@@ -471,7 +471,7 @@ async function updateProject(id) {
 
 function openGara(pid=null) {
   modal(`<div class="modal-title">Nuova gara / contratto</div>
-  <div class="fg"><label class="fl">Progetto collegato *</label><select id="g-pid">${projectOptions(pid)}</select></div>
+  <div class="fg"><label class="fl">Progetto collegato (opzionale)</label><select id="g-pid"><option value="">— Nessun progetto —</option>${projectOptions(pid)}</select></div>
   <div class="fg"><label class="fl">Riferimento bando</label><input id="g-ref" placeholder="Es: TELT-2023-LC-04"></div>
   <div class="fr">
     <div class="fg"><label class="fl">Data pubblicazione</label><input id="g-pub" type="date"></div>
@@ -489,8 +489,7 @@ function openGara(pid=null) {
   <div class="factions"><button class="btn" onclick="closeModal()">Annulla</button><button class="btn btn-primary" onclick="saveGara()">Salva</button></div>`);
 }
 async function saveGara() {
-  const pid=parseInt(v('g-pid'));
-  if(!pid) return;
+  const pid=v('g-pid')?parseInt(v('g-pid')):null;
   const winner=v('g-winner')||'—';
   const adate=v('g-adate')||null;
   const obj={project_id:pid,ref:v('g-ref'),published:v('g-pub')||null,deadline:v('g-dead')||null,base:v('g-base'),lot:v('g-lot'),winner,award_date:adate,discount:v('g-discount')||'—',source:v('g-source'),link:v('g-link')||'#'};
@@ -503,7 +502,7 @@ async function saveGara() {
 
 function openNews(pid=null, prefill={}) {
   modal(`<div class="modal-title">Aggiungi news / aggiornamento</div>
-  <div class="fg"><label class="fl">Progetto collegato</label><select id="n-pid">${projectOptions(pid)}</select></div>
+  <div class="fg"><label class="fl">Progetto collegato (opzionale)</label><select id="n-pid"><option value="">— Nessun progetto —</option>${projectOptions(pid)}</select></div>
   <div class="fg"><label class="fl">Titolo *</label><input id="n-title" value="${prefill.title||''}" placeholder="Es: TBM Virginia supera i 14 km"></div>
   <div class="fr">
     <div class="fg"><label class="fl">Data</label><input id="n-date" type="date" value="${prefill.date||today()}"></div>
@@ -520,14 +519,14 @@ function openNews(pid=null, prefill={}) {
 async function saveNews() {
   const title=v('n-title').trim();
   if(!title) return alert('Il titolo è obbligatorio');
-  const obj={project_id:parseInt(v('n-pid'))||null,title,date:v('n-date')||null,source:v('n-source'),tag:v('n-tag'),author:v('n-author'),excerpt:v('n-excerpt'),link:v('n-link')||'#'};
+  const obj={project_id:v('n-pid')?parseInt(v('n-pid')):null,title,date:v('n-date')||null,source:v('n-source'),tag:v('n-tag'),author:v('n-author'),excerpt:v('n-excerpt'),link:v('n-link')||'#'};
   await sb.from('news').insert([obj]);
   closeModal(); render();
 }
 
 function openReminder(pid=null) {
   modal(`<div class="modal-title">Nuovo reminder</div>
-  <div class="fg"><label class="fl">Progetto collegato</label><select id="r-pid">${projectOptions(pid)}</select></div>
+  <div class="fg"><label class="fl">Progetto collegato (opzionale)</label><select id="r-pid"><option value="">— Nessun progetto —</option>${projectOptions(pid)}</select></div>
   <div class="fg"><label class="fl">Descrizione *</label><input id="r-text" placeholder="Es: Verifica uscita bando Mumbai MTHL"></div>
   <div class="fr">
     <div class="fg"><label class="fl">Scadenza</label><input id="r-due" type="date"></div>
@@ -538,7 +537,7 @@ function openReminder(pid=null) {
 async function saveReminder() {
   const text=v('r-text').trim();
   if(!text) return alert('La descrizione è obbligatoria');
-  const obj={project_id:parseInt(v('r-pid'))||null,text,due:v('r-due')||null,urgency:v('r-urg'),status:'open'};
+  const obj={project_id:v('r-pid')?parseInt(v('r-pid')):null,text,due:v('r-due')||null,urgency:v('r-urg'),status:'open'};
   await sb.from('reminders').insert([obj]);
   closeModal(); render();
 }
