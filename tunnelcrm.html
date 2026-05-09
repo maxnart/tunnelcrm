@@ -23,7 +23,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .nav-item.active svg{opacity:1}
 .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:600;padding:1px 6px;border-radius:99px;min-width:18px;text-align:center}
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg2)}
-.topbar{padding:12px 20px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap}
+.topbar{padding:12px 20px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:nowrap;overflow-x:auto}
 .topbar-title{font-size:15px;font-weight:600;flex:1;color:var(--text)}
 .content{flex:1;overflow-y:auto;padding:20px}
 input,select,textarea{font-family:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;width:100%;transition:border 0.15s}
@@ -133,7 +133,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue)}
   <div class="main">
     <div class="topbar">
       <span class="topbar-title" id="topbar-title">Dashboard</span>
-      <div id="topbar-actions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"></div>
+      <div id="topbar-actions" style="display:flex;gap:8px;align-items:center;flex-wrap:nowrap"></div>
     </div>
     <div class="content" id="content">
       <div class="loading"><div class="ld"></div><div class="ld"></div><div class="ld"></div></div>
@@ -232,7 +232,7 @@ function renderDashboard(c,ta){
 }
 
 function renderProjects(c,ta){
-  ta.innerHTML='<input class="search-input" placeholder="Cerca..." oninput="filterP(this.value)" id="psearch"><button class="btn" onclick="printProjects()">Report HTML</button><button class="btn btn-primary" onclick="openProject()">+ Nuovo progetto</button>';
+  ta.innerHTML='<input class="search-input" placeholder="Cerca..." oninput="filterP(this.value)" id="psearch" style="width:150px"><button class="btn" onclick="printProjects()">Report HTML</button><button class="btn btn-primary" onclick="openProject()">+ Nuovo progetto</button>';
   c.innerHTML='<div class="card"><table class="table"><thead><tr><th>Progetto</th><th>Paese</th><th>Tipo</th><th>Km</th><th>Fase</th><th>GC aggiudicatario</th><th>Valore</th><th></th></tr></thead><tbody id="ptbody">'+pRows(projects)+'</tbody></table></div>';
 }
 
