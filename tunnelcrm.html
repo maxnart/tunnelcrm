@@ -409,13 +409,13 @@ function openReminder(pid){
   modal('<div class="modal-title">Nuovo reminder</div>'
     +'<div class="fg"><label class="fl">Progetto collegato (opzionale)</label><select id="r-pid"><option value="">— Nessun progetto —</option>'+projectOptions(pid)+'</select></div>'
     +'<div class="fg"><label class="fl">Descrizione *</label><input id="r-text" placeholder="Es: Verifica uscita bando Mumbai MTHL"></div>'
-    +'<div class="fg"><label class="fl">Scadenza</label><input id="r-due" type="date"></div>'
+    +'<div class="fg"><label class="fl">Scadenza</label><input id="r-due" type="date"></div>'+'<div class="fg"><label class="fl">Link riferimento</label><input id="r-link" placeholder="https://..."></div>'
     +'<div class="factions"><button class="btn" onclick="closeModal()">Annulla</button><button class="btn btn-primary" onclick="saveReminder()">Salva</button></div>');
 }
 
 async function saveReminder(){
   const text=v('r-text').trim();if(!text)return alert('La descrizione è obbligatoria');
-  await sb.from('reminders').insert([{project_id:v('r-pid')?parseInt(v('r-pid')):null,text,due:v('r-due')||null,urgency:'auto',status:'open'}]);
+  await sb.from('reminders').insert([{project_id:v('r-pid')?parseInt(v('r-pid')):null,text,due:v('r-due')||null,link:v('r-link')||null,urgency:'auto',status:'open'}]);
   closeModal();render();
 }
 
@@ -449,7 +449,7 @@ function openEditReminder(id){
 
 async function updateReminder(id){
   const text=v('r-text').trim();if(!text)return alert('La descrizione è obbligatoria');
-  await sb.from('reminders').update({project_id:v('r-pid')?parseInt(v('r-pid')):null,text,due:v('r-due')||null}).eq('id',id);
+  await sb.from('reminders').update({project_id:v('r-pid')?parseInt(v('r-pid')):null,text,due:v('r-due')||null,link:v('r-link')||null}).eq('id',id);
   closeModal();render();
 }
 
