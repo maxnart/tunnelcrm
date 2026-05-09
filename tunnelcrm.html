@@ -227,7 +227,7 @@ function renderDashboard(c,ta){
     +'</div>'
     +'<div class="section-hdr"><span class="section-title">Reminder in scadenza</span><button class="btn btn-sm" onclick="go(\'reminders\')">Vedi tutti →</button></div>'
     +'<div class="rem-list">'
-    +(openRem.slice(0,3).map(r=>'<div class="rem-item"><div class="rem-dot '+remDotStyle(r.due)+'"></div><div class="rem-body"><div class="rem-text">'+r.text+'</div><div class="rem-proj">'+pname(r.project_id)+'</div></div><div class="rem-due">Scad. '+(r.due||'—')+'</div><button class="btn btn-sm" onclick="closeReminder('+r.id+')">✓ Chiudi</button><button class="btn btn-sm" style="color:var(--red)" onclick="deleteReminder('+r.id+')">Elimina</button></div>').join('')||'<div class="empty">Nessun reminder aperto.</div>')
+    +(openRem.slice(0,3).map(r=>'<div class="rem-item"><div class="rem-dot '+remDotStyle(r.due)+'"></div><div class="rem-body"><div class="rem-text">'+r.text+'</div><div class="rem-proj">'+pname(r.project_id)+'</div></div><div class="rem-due">Scad. '+(r.due||'—')+'</div><button class="btn btn-sm" onclick="openEditReminder('+r.id+')">Modifica</button><button class="btn btn-sm" style="color:var(--red)" onclick="deleteReminder('+r.id+')">Elimina</button></div>').join('')||'<div class="empty">Nessun reminder aperto.</div>')
     +'</div>';
 }
 
@@ -266,9 +266,9 @@ function renderReminders(c,ta){
   const closed=reminders.filter(r=>r.status==='closed');
   c.innerHTML='<div class="section-hdr"><span class="section-title">Aperti ('+open.length+')</span></div>'
     +'<div class="rem-list" style="margin-bottom:20px">'
-    +(open.length?open.map(r=>'<div class="rem-item"><div class="rem-dot '+remDotStyle(r.due)+'"></div><div class="rem-body"><div class="rem-text">'+r.text+'</div><div class="rem-proj">'+pname(r.project_id)+'</div></div><div class="rem-due">Scad. '+(r.due||'—')+'</div><button class="btn btn-sm" onclick="closeReminder('+r.id+')">✓ Chiudi</button><button class="btn btn-sm" style="color:var(--red)" onclick="deleteReminder('+r.id+')">Elimina</button></div>').join(''):'<div class="empty">Nessun reminder aperto.</div>')
+    +(open.length?open.map(r=>'<div class="rem-item"><div class="rem-dot '+remDotStyle(r.due)+'"></div><div class="rem-body"><div class="rem-text">'+r.text+'</div><div class="rem-proj">'+pname(r.project_id)+'</div></div><div class="rem-due">Scad. '+(r.due||'—')+'</div><button class="btn btn-sm" onclick="openEditReminder('+r.id+')">Modifica</button><button class="btn btn-sm" style="color:var(--red)" onclick="deleteReminder('+r.id+')">Elimina</button></div>').join(''):'<div class="empty">Nessun reminder aperto.</div>')
     +'</div>'
-    +(closed.length?'<div class="section-hdr"><span class="section-title" style="color:var(--text3)">Chiusi ('+closed.length+')</span></div><div class="rem-list">'+closed.map(r=>'<div class="rem-item" style="opacity:0.45"><div class="rem-dot" style="background:var(--text3)"></div><div class="rem-body" style="text-decoration:line-through"><div class="rem-text">'+r.text+'</div><div class="rem-proj">'+pname(r.project_id)+'</div></div><div class="rem-due">'+(r.due||'')+'</div></div>').join('')+'</div>':'');
+    ;
 }
 
 async function renderDetail(c,ta){
@@ -282,7 +282,7 @@ async function renderDetail(c,ta){
   c.innerHTML='<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)"><div><div style="font-size:18px;font-weight:600;margin-bottom:4px">'+p.name+'</div><div style="font-size:13px;color:var(--text2)">'+(p.country||'')+' · '+(p.type||'')+' · '+(p.km?p.km+' km':'')+'</div></div>'+faseBadge(p.phase)+'</div>'
     +'<div class="detail-grid"><div class="df"><div class="df-label">Committente</div><div class="df-val">'+(p.client||'—')+'</div></div><div class="df"><div class="df-label">Progettista</div><div class="df-val">'+(p.designer||'—')+'</div></div><div class="df"><div class="df-label">General contractor</div><div class="df-val">'+(p.gc||'—')+'</div></div><div class="df"><div class="df-label">Valore</div><div class="df-val">'+(p.value||'—')+'</div></div><div class="df"><div class="df-label">TBM prevista</div><div class="df-val">'+(p.tbm?'Sì':'No')+'</div></div><div class="df"><div class="df-label">Lunghezza</div><div class="df-val">'+(p.km?p.km+' km':'—')+'</div></div></div>'
     +(p.notes?'<div class="notes-box">'+p.notes+'</div>':'')
-    +(pr.length?'<div class="section-hdr" style="margin-bottom:8px"><span class="section-title">Reminder aperti</span></div><div class="rem-list" style="margin-bottom:16px">'+pr.map(r=>'<div class="rem-item"><div class="rem-dot '+remDotStyle(r.due)+'"></div><div class="rem-body"><div class="rem-text">'+r.text+'</div></div><div class="rem-due">Scad. '+(r.due||'—')+'</div><button class="btn btn-sm" onclick="closeReminder('+r.id+')">✓</button></div>').join('')+'</div>':'')
+    +(pr.length?'<div class="section-hdr" style="margin-bottom:8px"><span class="section-title">Reminder aperti</span></div><div class="rem-list" style="margin-bottom:16px">'+pr.map(r=>'<div class="rem-item"><div class="rem-dot '+remDotStyle(r.due)+'"></div><div class="rem-body"><div class="rem-text">'+r.text+'</div></div><div class="rem-due">Scad. '+(r.due||'—')+'</div><button class="btn btn-sm" onclick="openEditReminder('+r.id+')">Modifica</button></div>').join('')+'</div>':'')
     +(pg.length?'<div class="section-hdr"><span class="section-title">Gare & Contratti</span><button class="btn btn-sm" onclick="openGara('+p.id+')">+ Aggiungi</button></div><div class="card" style="margin-bottom:16px"><table class="table"><thead><tr><th>Rif.</th><th>Tipo</th><th>Base d\'asta</th><th>Scadenza</th><th>Aggiudicatario</th><th>Ribasso</th></tr></thead><tbody>'+pg.map(g=>'<tr><td style="font-size:11px">'+(g.ref||'')+'</td><td style="font-size:11px">'+(g.tipo_tunnel||'—')+'</td><td>'+(g.base||'')+'</td><td style="'+deadlineStyle(g.deadline)+'">'+(g.deadline||'')+'</td><td style="font-weight:500">'+(g.winner&&g.winner!=='—'?g.winner:'<span style="color:var(--text3);font-weight:400;font-style:italic">In corso</span>')+'</td><td>'+(g.discount||'—')+'</td></tr>').join('')+'</tbody></table></div>':'')
     +'<div class="section-hdr"><span class="section-title">Log aggiornamenti ('+pn.length+')</span><button class="btn btn-sm" onclick="openNews('+p.id+')">+ Aggiungi</button></div>'
     +'<div class="news-list">'+(pn.length?pn.map(n=>'<div class="news-item"><div class="news-meta"><span class="news-source">'+(n.source||'')+'</span><span class="news-date">'+(n.date||'')+'</span>'+tagBadge(n.tag||'')+'<span style="margin-left:auto;font-size:11px;color:var(--text3)">'+(n.author||'')+'</span></div><div class="news-title">'+n.title+'</div>'+(n.excerpt?'<div class="news-excerpt">'+n.excerpt+'</div>':'')+(n.link&&n.link!='#'?'<a href="'+n.link+'" target="_blank" style="font-size:11px;color:var(--blue);margin-top:5px;display:inline-block">Apri fonte →</a>':'')+'</div>').join(''):'<div class="empty">Nessun aggiornamento registrato.</div>')+'</div>';
@@ -436,6 +436,21 @@ function printGare(){
   const rows=gare.map(g=>'<div class="pc"><div class="pct">'+(g.ref||'Gara senza riferimento')+' <span class="ph">'+(g.winner&&g.winner!=='—'?'Aggiudicata':'In corso')+'</span></div><div class="pg"><div class="pf"><div class="pl">Progetto</div><div class="pv">'+pname(g.project_id)+'</div></div><div class="pf"><div class="pl">Tipo tunnel</div><div class="pv">'+(g.tipo_tunnel||'—')+'</div></div><div class="pf"><div class="pl">Base d\'asta</div><div class="pv">'+(g.base||'—')+'</div></div><div class="pf"><div class="pl">Scadenza</div><div class="pv">'+(g.deadline||'—')+'</div></div><div class="pf"><div class="pl">Aggiudicatario</div><div class="pv">'+(g.winner&&g.winner!=='—'?g.winner:'In corso')+'</div></div><div class="pf"><div class="pl">Ribasso</div><div class="pv">'+(g.discount&&g.discount!=='—'?g.discount+'%':'—')+'</div></div><div class="pf"><div class="pl">Data aggiudicazione</div><div class="pv">'+(g.award_date||'—')+'</div></div><div class="pf"><div class="pl">Fonte</div><div class="pv">'+(g.source||'—')+'</div></div></div></div>').join('');
   win.document.write('<!DOCTYPE html><html><head><title>Report Gare - TunnelCRM</title><style>body{font-family:-apple-system,sans-serif;padding:24px;color:#1a1a1a;max-width:900px;margin:0 auto}h1{font-size:20px;font-weight:600;margin-bottom:4px}.sub{font-size:12px;color:#888;margin-bottom:24px}.pc{border:1px solid #ddd;border-radius:8px;padding:16px;margin-bottom:14px;break-inside:avoid}.pct{font-size:14px;font-weight:600;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #eee}.ph{font-size:11px;font-weight:400;color:#888;margin-left:8px}.pg{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pf{font-size:12px}.pl{color:#888;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px}.pv{font-weight:500}</style></head><body><h1>Report Gare & Contratti</h1><div class="sub">TunnelCRM · '+new Date().toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'})+' · '+gare.length+' gare</div>'+rows+'</body></html>');
   win.document.close();
+}
+
+function openEditReminder(id){
+  const r=reminders.find(x=>x.id==id);if(!r)return;
+  modal('<div class="modal-title">Modifica reminder</div>'
+    +'<div class="fg"><label class="fl">Progetto collegato (opzionale)</label><select id="r-pid"><option value="">— Nessun progetto —</option>'+projectOptions(r.project_id)+'</select></div>'
+    +'<div class="fg"><label class="fl">Descrizione *</label><input id="r-text" value="'+(r.text||'')+'"></div>'
+    +'<div class="fg"><label class="fl">Scadenza</label><input id="r-due" type="date" value="'+(r.due||'')+'"></div>'
+    +'<div class="factions"><button class="btn" onclick="closeModal()">Annulla</button><button class="btn btn-primary" onclick="updateReminder('+id+')">Aggiorna</button></div>');
+}
+
+async function updateReminder(id){
+  const text=v('r-text').trim();if(!text)return alert('La descrizione è obbligatoria');
+  await sb.from('reminders').update({project_id:v('r-pid')?parseInt(v('r-pid')):null,text,due:v('r-due')||null}).eq('id',id);
+  closeModal();render();
 }
 
 async function deleteReminder(id){
