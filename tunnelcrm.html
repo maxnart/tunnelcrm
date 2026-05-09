@@ -170,6 +170,15 @@ function faseBadge(f){return '<span class="badge-fase '+faseClass(f)+'">'+(f||''
 function tagBadge(t){return '<span class="news-tag tag-'+t+'">'+t+'</span>';}
 function today(){return new Date().toISOString().slice(0,10);}
 
+function remDotStyle(due){
+  if(!due) return 'dot-green';
+  const t=today();
+  const diff=(new Date(due)-new Date(t))/(1000*60*60*24);
+  if(diff<0||due===t) return 'dot-red';
+  if(diff<=7) return 'dot-amber';
+  return 'dot-green';
+}
+
 function deadlineStyle(d){
   if(!d)return '';
   const t=today();
@@ -400,13 +409,13 @@ function openReminder(pid){
   modal('<div class="modal-title">Nuovo reminder</div>'
     +'<div class="fg"><label class="fl">Progetto collegato (opzionale)</label><select id="r-pid"><option value="">— Nessun progetto —</option>'+projectOptions(pid)+'</select></div>'
     +'<div class="fg"><label class="fl">Descrizione *</label><input id="r-text" placeholder="Es: Verifica uscita bando Mumbai MTHL"></div>'
-    +'<div class="fr"><div class="fg"><label class="fl">Scadenza</label><input id="r-due" type="date"></div><div class="fg"><label class="fl">Priorità</label><select id="r-urg"><option value="red">Alta</option><option value="amber">Media</option><option value="green">Bassa</option></select></div></div>'
+    +'<div class="fg"><label class="fl">Scadenza</label><input id="r-due" type="date"></div>'
     +'<div class="factions"><button class="btn" onclick="closeModal()">Annulla</button><button class="btn btn-primary" onclick="saveReminder()">Salva</button></div>');
 }
 
 async function saveReminder(){
   const text=v('r-text').trim();if(!text)return alert('La descrizione è obbligatoria');
-  await sb.from('reminders').insert([{project_id:v('r-pid')?parseInt(v('r-pid')):null,text,due:v('r-due')||null,urgency:v('r-urg'),status:'open'}]);
+  await sb.from('reminders').insert([{project_id:v('r-pid')?parseInt(v('r-pid')):null,text,due:v('r-due')||null,urgency:'auto',status:'open'}]);
   closeModal();render();
 }
 
